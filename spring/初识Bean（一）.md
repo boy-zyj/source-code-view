@@ -61,6 +61,7 @@ class C {
 
 
 ```java
+// 源码见 AnnotatedBeanDefinitionReader#doRegisterBean
 private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
         @Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
         @Nullable BeanDefinitionCustomizer[] customizers) {
@@ -118,7 +119,8 @@ private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHash
 但不得不说，这个实例化的过程具体实现非常非常复杂，源码量很庞大，很多具体的细节实现单独拎出来都能又写一篇心得了。不过整个过程的阶段还是相对比较清晰的，这里梳理了这个过程中的一部分阶段（部分阶段的实现还未细看）：
 
 1. 首先解析 `name`，将其转化为真正的 `beanName`，因为 `BeanDefinition`是可以有别名的
-```
+```java
+// 源码见 AbstractBeanFactory#doGetBean
 @SuppressWarnings("unchecked")
 protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
         @Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
@@ -129,12 +131,14 @@ protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredTy
 ```
 
 2. 检查有没有已经实例化过的 Singleton 实例，如果有，将不会执行下面的实例化过程
-```
+```java
+// 源码见 AbstractBeanFactory#doGetBean
 Object sharedInstance = getSingleton(beanName)
 ```
 
 3. 如果没有 `beanName` 对应的 `BeanDefinition` 对象时，会调用父 `BeanFactory` 对象的 `getBean` 方法获取
 ```java
+// 源码见 AbstractBeanFactory#doGetBean
 BeanFactory parentBeanFactory = getParentBeanFactory();
 if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
     // ...
@@ -143,6 +147,7 @@ if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 
 4. 读取 `BeanDefinition` 对象的 `dependsOn` 属性，如果有依赖的 `Bean`，注册依赖关系，并且先实例化这些 `Bean`
 ```java
+// 源码见 AbstractBeanFactory#doGetBean
 String[] dependsOn = mbd.getDependsOn();
 if (dependsOn != null) {
     for (String dep : dependsOn) {
@@ -164,6 +169,7 @@ if (dependsOn != null) {
 
 5. 读取 `BeanDefinition` 的 `scope` 属性，如果是 Singleton，则实例化的对象会保存起来，下次再调用 `getBean` 方法时，直接返回该对象。如果是 Prototype，则每次调用 `getBean` 方法生成新的对象。
 ```java
+// 源码见 AbstractBeanFactory#doGetBean
 if (mbd.isSingleton()) {
     // 默认 scope 为 Singleton
     // ...
@@ -183,11 +189,13 @@ else {
 
 6.1 根据 `BeanDefinition` 获取类信息
 ```java
+// 源码见 AbstractAutowireCapableBeanFactory#createBean
 Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
 ```
 
 6.2 有一些非常规的实例化方式，比如会检查 `DefaultListableBeanFactory` 里的 BeanPostProcessors 能不能直接返回对象（`BeanPostProcessor`也是重要概念）这里实例化的对象会在 `createBean`方法中直接返回。不同于其他方式，还会经历后续一系列处理
 ```java
+// 源码见 AbstractAutowireCapableBeanFactory#createBean
 try {
     // Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
     Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
@@ -201,10 +209,11 @@ catch (Throwable ex) {
 }
 ```
 
-6.3 常规方式
+6.3 常规方式获得实例化对象，有以下几种：
 
-6.3.1 如果 `BeanDefinition` 里直接定义了 Supplier，直接调用。（Supplier 相当于python里的 callable）
+6.3.1 如果 `BeanDefinition` 里直接定义了 Supplier，直接调用。（这里的Supplier 有点类似于python里的 Callable）
 ```java
+// 源码见 AbstractAutowireCapableBeanFactory#createBeanInstance
 Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 if (instanceSupplier != null) {
     return obtainFromSupplier(instanceSupplier, beanName);
@@ -213,6 +222,7 @@ if (instanceSupplier != null) {
 
 6.3.2 根据 `BeanDefinition` 里的 beanClass 等信息进行实例化。这里的代码解释了 `BeanDefinition` 的 beanClass 是 `Interface` 的情况下为什么也能生成实例对象
 ```java
+// 源码见 SimpleInstantiationStrategy#instantiate 
 if (!bd.hasMethodOverrides()) {
     // 1. 先根据JAVA反射机制获取 Constructor
     Constructor<?> constructorToUse;
@@ -265,6 +275,8 @@ class D {
 }
 ```
 ```java
+// 源码见 AbstractAutowireCapableBeanFactory#autowireConstructor
+
 // 如果 Constructor 的参数个数不为0时，实例化调用该方法
 // 简单来说，这个方法会 根据 BeanDefinition 里的 constructorArgumentValues 获取参数对应的对象实例，如果没有
 // 则根据参数类型，去匹配该类型的 Bean，实例化后作为参数实例
@@ -279,6 +291,7 @@ protected BeanWrapper autowireConstructor(
 
 比如调用 DefaultListableBeanFactory 里的 BeanPostProcessors 对实例化对象进行处理
 ```java
+// 源码见 AbstractAutowireCapableBeanFactory#populateBean
 for (BeanPostProcessor bp : getBeanPostProcessors()) {
     if (bp instanceof InstantiationAwareBeanPostProcessor) {
         InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
@@ -313,6 +326,7 @@ class B {
 
 `ApplicationContextAwareProcessor` 发现 Bean 实例为 `EnvironmentAware`时调用实例的 `setEnvironment` 方法，实例为 `ApplicationContextAware`时调用实例的 `setApplicationContext` 方法等
 ```java
+// 源码见 ApplicationContextAwareProcessor#invokeAwareInterfaces
 private void invokeAwareInterfaces(Object bean) {
     if (bean instanceof EnvironmentAware) {
         ((EnvironmentAware) bean).setEnvironment(this.applicationContext.getEnvironment());
