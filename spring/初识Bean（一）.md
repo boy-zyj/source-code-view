@@ -9,11 +9,11 @@
 
 所以在遇到了`Bean`这一概念之前，学习java过程中的一切都还是美好的。
 
-在艰难的阅读sping源码的过程中，慢慢地我对`Bean`也开始有了初步的理解，没有了初见时那种强烈的陌生感和困惑感。所以这里写篇文章记录一下，既作为源码学习过程中的阶段性总结，也作一点分享。
+在艰难的阅读sping源码的过程中，慢慢地我对`Bean`也开始有了初步的理解，没有了初见时那种挥之不去的陌生感和困惑感。所以这里写篇文章记录一下，既作为源码学习过程中的阶段性总结，也作一点分享。
 
 一开始接触spring相关开发时，头脑中满是疑惑，很多代码对我这个pythoner来说简直不可思议，比如
 
-为什么类名上面加上注解`Component`就是一个`Bean`？（这样表述实际上并不准确）
+为什么类名上面加上注解`Component`就是一个`Bean`？（实际上这样表述并不准确）
 ```java
 @Component
 class A {
@@ -22,7 +22,7 @@ class A {
 ```
 
 为什么`@Autowired`就能将其它`Bean`注入进来？
-为什么`@Value`给`value`赋值？
+为什么`@Value`能给`value`赋值？
 ```java
 @Service
 class B {
@@ -59,7 +59,7 @@ class C {
 
 实际上，当阅读过`Bean`实例的实例化过程中的相关源码后，`Bean`就已经不那么陌生和神秘了。
 
-
+先从一段代码说起
 ```java
 // 源码见 AnnotatedBeanDefinitionReader#doRegisterBean
 private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
@@ -103,7 +103,7 @@ private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
 ```
 上面是类`AnnotatedBeanDefinitionReader`中方法，在这个方法中，需要特别留意`AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass)`这个实例, `this.scopeMetadataResolver.resolveScopeMetadata(abd)`读取`beanClass`的`@Scope`注解获取`abd`实例的`scope`属性。类似的，在`AnnotationConfigUtils.processCommonDefinitionAnnotations(abd)`方法中读取`@Lazy`获取`lazyInit`属性，读取`@Primary`获取`primary`属性，读取`DependsOn`获取`dependsOn`属性等等。
 
-这些属性都是`BeanDefinition`的属性，`BeanDefinition`是对`Bean`的定义进行描述的实例。
+这些属性都是`BeanDefinition`的属性，`BeanDefinition`是对`Bean`的定义进行描述的实例对象。
 
 简单来说，spring有三大组件，Core(`org.springframework.core`)、Context(`org.springframework.context`) 和 Beans(`org.springframework.beans`)，Context中的类`ClassPathBeanDefinitionScanner`和`AnnotatedBeanDefinitionReader`读取相应包的相应类（如该类有`Component`注解），解析该类的注解（解析实现见Core），生成`BeanDefinition`实例，所有这些实例都注册在Beans里的`DefaultListableBeanFactory`实例中。
 
