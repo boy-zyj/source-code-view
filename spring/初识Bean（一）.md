@@ -130,7 +130,7 @@ protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredTy
 }
 ```
 
-2. 检查有没有已经实例化过的 Singleton 实例，如果有，将不会执行下面的实例化过程
+2. 检查有没有已经实例化过的 Singleton 实例，如果有，将不会执行下面的实例化过程，这里就将直接返回（实际上还有一小段处理，涉及 `FactoryBean`，这里先不展开说了）
 ```java
 // 源码见 AbstractBeanFactory#doGetBean
 Object sharedInstance = getSingleton(beanName)
