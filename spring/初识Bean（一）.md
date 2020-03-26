@@ -376,3 +376,5 @@ else {
 
 ## 感想
 最后谈一下最近看 `Bean` 相关源码的感受。`Bean` 实际上应该是一种设计模式，或者说是设计理念，并不独属于java，python语言应该也一样可以有类似实现。而在spring框架下写加了 `@Component`注解的`Class`时，更像是在用spring的规范在描述一个 `Bean` 。正如某个名言，`Bean` 来源于 `Class`，但高于 `Class` 。
+
+待续（将更新 `@EventListener` 注解如何实现事件监听的源码分析）
