@@ -206,7 +206,7 @@ private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHash
         Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
         ```
 
-    2. 有一些非常规的实例化方式，比如会检查 `DefaultListableBeanFactory` 里的 BeanPostProcessors 能不能直接返回对象（`BeanPostProcessor`也是重要概念）这里实例化的对象会在 `createBean`方法中直接返回。不同于其他方式，还会经历后续一系列处理
+    2. 有一些非常规的实例化方式，比如会检查 `DefaultListableBeanFactory` 里的 BeanPostProcessors 能不能直接返回对象（`BeanPostProcessor`也是重要概念）这里实例化的对象会在 `createBean`方法中直接返回。而常规方式实例化的实例，还会经历后续一系列处理
         ```java
         // 源码见 AbstractAutowireCapableBeanFactory#createBean
         try {
