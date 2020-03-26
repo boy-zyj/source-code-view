@@ -289,7 +289,7 @@ private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHash
 
             // 如果 Constructor 的参数个数不为0时，实例化调用该方法
             // 简单来说，这个方法会 根据 BeanDefinition 里的 constructorArgumentValues 获取参数对应的对象实例，如果没有
-            // 则根据参数类型，去匹配该类型的 Bean，实例化后作为参数实例
+            // 则根据参数类型，去匹配该类型的 Bean，实例化后作为 Constructor 的参数实例
             protected BeanWrapper autowireConstructor(
                     String beanName, RootBeanDefinition mbd, @Nullable Constructor<?>[] ctors, @Nullable Object[] explicitArgs) {
 
