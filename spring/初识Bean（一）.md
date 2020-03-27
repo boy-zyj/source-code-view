@@ -60,7 +60,7 @@ class C {
 
 实际上，当阅读过`Bean`实例的实例化过程中的相关源码后，`Bean`就已经不那么陌生和神秘了。
 
-## 从`BeanDefinition`说起
+## 从最简单的`BeanDefinition`说起
 
 先来简单地看一段代码
 ```java
@@ -110,9 +110,9 @@ private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
 
 类似的，在`AnnotationConfigUtils.processCommonDefinitionAnnotations(abd)` 方法中读取 `@Lazy` 获取`lazyInit`属性，读取`@Primary`获取`primary`属性，读取`@DependsOn`获取`dependsOn`属性等等。
 
-这些属性都是`BeanDefinition`的属性，`BeanDefinition`是对`Bean`的定义进行描述的实例对象。
+这些属性都是`BeanDefinition`的属性。`BeanDefinition`的实现还是比较简单的，主要就是属性的getter和setter，这些属性组成了对`Bean`的定义和描述。
 
-##  `DefaultListableBeanFactory`: `BeanDefinition`的容器
+## 管理`BeanDefinition`的容器: `DefaultListableBeanFactory`
 
 简单来说，spring有三大组件，Core(`org.springframework.core`)、Context(`org.springframework.context`) 和 Beans(`org.springframework.beans`)，Context中的类`ClassPathBeanDefinitionScanner`和`AnnotatedBeanDefinitionReader`读取相应包的相应类（如该类有`Component`注解），解析该类的注解（解析实现见Core），生成`BeanDefinition`实例，所有这些实例都注册在Beans里的`DefaultListableBeanFactory`实例中。
 
@@ -127,7 +127,7 @@ private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHash
 
 `BeanDefinition`实例对象管理在这个 `Map` 中，当调用 `DefaultListableBeanFactory` 的 `getBean(String name)`时，首先会从这个 `Map` 中获取对应的 `BeanDefinition` 实例对象，再根据该实例对象生成对应的 `Bean` 实例。
 
-## `BeanDefinition` -> `Bean` 实例
+## 如何从`BeanDefinition` -> `Bean` 实例
 
 不得不说，这个实例化的过程具体实现非常非常复杂，源码量很庞大，很多具体的细节实现单独拎出来都能又写一篇心得了。不过整个过程的阶段还是相对比较清晰的，这里梳理了这个过程中的一部分阶段（部分阶段的实现还未细看）：
 
